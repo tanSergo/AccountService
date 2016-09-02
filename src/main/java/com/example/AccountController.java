@@ -20,8 +20,6 @@ import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping(value = "/service/{id}")
 public class AccountController implements AccountService {
-//public class AccountController  {
-
     private static final Logger log = LoggerFactory.getLogger(AccountServiceApplication.class);
 
     @Autowired
@@ -63,13 +61,12 @@ public class AccountController implements AccountService {
     }
 
     @Override
-//    @CachePut(value = "amounts")
+    @CachePut(value = "amounts")
     public void addAmount(Integer id, Long value) {
         Repository.save(new Account(id, value));
     }
 
 
-    // Don't do this at home
     private void simulateSlowService() {
         try {
             long time = 5000L;
