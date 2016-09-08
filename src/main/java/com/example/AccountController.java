@@ -22,10 +22,7 @@ import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping(value = "/service/{id}")
 public class AccountController implements AccountService {
-<<<<<<< HEAD
 
-=======
->>>>>>> 1990e186dc0fda0f454dc606009a90e57794f98d
     private static final Logger log = LoggerFactory.getLogger(AccountServiceApplication.class);
 
     @Autowired
@@ -71,10 +68,7 @@ public class AccountController implements AccountService {
 
     @Override
     @CachePut(value = "amounts")
-<<<<<<< HEAD
     @Transactional
-=======
->>>>>>> 1990e186dc0fda0f454dc606009a90e57794f98d
     public void addAmount(Integer id, Long value) {
         try {
             Repository.save(new Account(id, getAmount(id) + value));
