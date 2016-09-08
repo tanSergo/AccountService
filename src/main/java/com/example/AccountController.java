@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -20,22 +22,26 @@ import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping(value = "/service/{id}")
 public class AccountController implements AccountService {
-//public class AccountController  {
 
     private static final Logger log = LoggerFactory.getLogger(AccountServiceApplication.class);
 
     @Autowired
     AccountRepository Repository;
 
+    private HashSet<Integer> myHashSet = new HashSet<Integer>();
+
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public List<Account> getAll() {
         return Repository.findAll();
     }
 
-    @RequestMapping(value = "/{amount}", method = RequestMethod.GET)
-    public String adding(@PathVariable("id") Integer id, @PathVariable("amount") Long amount) {
-        addAmount(id, amount);
-        return "New Amount is " + amount + " for id=" + id + "!";
+    @RequestMapping(value = "/{value}", method = RequestMethod.GET)
+    public String adding(@PathVariable("id") Integer id, @PathVariable("value") Long value) {
+        if (myHashSet.add(id)) {
+            addAmount(id, value);
+            return "New Amount is " + getAmount(id) + " for id=" + id + "!";
+        }
+        else return "Try later!";
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -57,15 +63,20 @@ public class AccountController implements AccountService {
     @Override
     @Cacheable(value = "amounts")
     public Long getAmount(Integer id) {
-        Account temp = Repository.findById(id);
-//        simulateSlowService();
-        return temp.retAmount();
+        return Repository.findById(id).retAmount();
     }
 
     @Override
-//    @CachePut(value = "amounts")
+    @CachePut(value = "amounts")
+    @Transactional
     public void addAmount(Integer id, Long value) {
-        Repository.save(new Account(id, value));
+        try {
+            Repository.save(new Account(id, getAmount(id) + value));
+            myHashSet.remove(id);
+        } catch (NullPointerException e) {
+            Repository.save(new Account(id, value));
+            myHashSet.remove(id);
+        }
     }
 
 
