@@ -7,8 +7,11 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +31,7 @@ public class AccountController implements AccountService {
     @Autowired
     AccountRepository Repository;
 
-    private HashSet<Integer> myHashSet = new HashSet<Integer>();
+    private ConcurrentMap<Integer, Integer> accountIds = new ConcurrentHashMap<>();
 
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public List<Account> getAll() {
@@ -70,13 +73,14 @@ public class AccountController implements AccountService {
     @CachePut(value = "amounts")
     @Transactional
     public void addAmount(Integer id, Long value) {
-        try {
-            Repository.save(new Account(id, getAmount(id) + value));
-            myHashSet.remove(id);
-        } catch (NullPointerException e) {
-            Repository.save(new Account(id, value));
-            myHashSet.remove(id);
+        if (accountIds.putIfAbsent(id, id) != null)
+        {
+            throw new ConcurrentModificationException();
         }
+        Repository.save(new Account(id, getAmount(id) + value));
+ 
+        // говорим, что можно снова обращаться к этому аккаунту
+        accountIds.remove(id);
     }
 
 
