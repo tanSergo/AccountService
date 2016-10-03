@@ -77,7 +77,13 @@ public class AccountController implements AccountService {
         {
             throw new ConcurrentModificationException();
         }
-        Repository.save(new Account(id, getAmount(id) + value));
+//        Repository.save(new Account(id, getAmount(id) + value));
+        
+        try {
+            Repository.save(new Account(id, getAmount(id) + value));
+        } catch (NullPointerException e) {
+            Repository.save(new Account(id, value));
+        }
  
         // говорим, что можно снова обращаться к этому аккаунту
         accountIds.remove(id);
