@@ -40,11 +40,8 @@ public class AccountController implements AccountService {
 
     @RequestMapping(value = "/{value}", method = RequestMethod.GET)
     public String adding(@PathVariable("id") Integer id, @PathVariable("value") Long value) {
-        if (myHashSet.add(id)) {
             addAmount(id, value);
             return "New Amount is " + getAmount(id) + " for id=" + id + "!";
-        }
-        else return "Try later!";
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -77,19 +74,15 @@ public class AccountController implements AccountService {
         {
             throw new ConcurrentModificationException();
         }
-        Repository.save(new Account(id, getAmount(id) + value));
- 
+
+        try {
+            Repository.save(new Account(id, getAmount(id) + value));
+        } catch (NullPointerException e) {
+            Repository.save(new Account(id, value));
+        }
+
         // говорим, что можно снова обращаться к этому аккаунту
         accountIds.remove(id);
     }
 
-
-    private void simulateSlowService() {
-        try {
-            long time = 5000L;
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
-    }
 }
